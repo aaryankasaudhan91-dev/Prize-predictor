@@ -5,6 +5,7 @@ xgboost
 joblib
 fastapi
 uvicorn
+gunicorn
 pydantic
 python-multipart
 python-dotenv
