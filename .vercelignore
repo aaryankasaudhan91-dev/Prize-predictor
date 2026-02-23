@@ -1,0 +1,8 @@
+backend/
+ml/
+*.py
+*.csv
+*.joblib
+*.pkl
+venv/
+node_modules/
