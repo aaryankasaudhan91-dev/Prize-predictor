@@ -1,0 +1,9 @@
+venv/
+node_modules/
+.next/
+__pycache__/
+*.joblib
+*.csv
+*.pkl
+*.pkl.json
+.env
