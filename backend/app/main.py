@@ -12,7 +12,7 @@ app = FastAPI(
 # CORS middleware for frontend communication
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, replace with specific origins
+    allow_origins=["*"], # In production, replace with specific originsgit 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

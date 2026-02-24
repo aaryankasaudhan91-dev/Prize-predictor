@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { ChevronRight, ChevronLeft, Home, MapPin, Building, Info, Calculator, CheckCircle2 } from "lucide-react"
+import React, { useState, useEffect, useRef } from "react"
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
+import { MapPin, Home, Building, Calculator, CheckCircle2, ChevronDown } from "lucide-react"
 import axios from "axios"
 import { cn, formatPrice } from "@/lib/utils"
 
@@ -23,7 +23,6 @@ const FeatureCard = ({ icon, label, value }: FeatureCardProps) => (
 )
 
 export default function HousePricePredictor() {
-    const [step, setStep] = useState(1)
     const [locations, setLocations] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
     const [prediction, setPrediction] = useState<number | null>(null)
@@ -55,22 +54,14 @@ export default function HousePricePredictor() {
         fetchLocations()
     }, [])
 
-    const steps = [
-        { title: "Location", icon: <MapPin className="w-5 h-5" /> },
-        { title: "Size", icon: <Home className="w-5 h-5" /> },
-        { title: "Building", icon: <Building className="w-5 h-5" /> },
-        { title: "Details", icon: <Info className="w-5 h-5" /> }
-    ]
-
-    const nextStep = () => setStep(prev => Math.min(prev + 1, 4))
-    const prevStep = () => setStep(prev => Math.max(prev - 1, 1))
-
     const handleSubmit = async () => {
         setLoading(true)
         try {
             const response = await axios.post(`${API_URL}/predict`, formData)
             setPrediction(response.data.predicted_price)
-            setStep(5) // Prediction step
+            setTimeout(() => {
+                document.getElementById('result-section')?.scrollIntoView({ behavior: 'smooth' })
+            }, 100)
         } catch (error) {
             console.error("Error predicting price:", error)
             alert("Failed to get prediction. Ensure the backend is running.")
@@ -79,265 +70,287 @@ export default function HousePricePredictor() {
         }
     }
 
-    const renderStep = () => {
-        switch (step) {
-            case 1:
-                return (
+    return (
+        <div className="min-h-screen bg-[#0f172a] text-white selection:bg-emerald-500/30">
+            {/* Background effects */}
+            <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-emerald-500/10 blur-[120px] rounded-full" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-cyan-500/10 blur-[120px] rounded-full" />
+            </div>
+
+            <div className="relative z-10 max-w-4xl mx-auto px-6 py-24 space-y-32">
+
+                {/* Hero Section */}
+                <motion.section
+                    initial={{ opacity: 0, y: 50 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="min-h-[80vh] flex flex-col justify-center items-center text-center space-y-8"
+                >
+                    <div className="space-y-4">
+                        <div className="inline-block px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-sm font-medium tracking-wide">
+                            AI-Powered Real Estate Engine
+                        </div>
+                        <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-tight">
+                            Navi Mumbai <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">HouseVal</span>
+                        </h1>
+                        <p className="max-w-xl mx-auto text-lg text-slate-400 leading-relaxed mt-4">
+                            Discover the true market value of any property in Navi Mumbai. Our machine learning model analyzes thousands of recent transactions to give you an accurate, unbiased estimate as you scroll.
+                        </p>
+                    </div>
+                    <motion.div
+                        animate={{ y: [0, 10, 0] }}
+                        transition={{ repeat: Infinity, duration: 2 }}
+                        className="pt-12 text-slate-500"
+                    >
+                        <ChevronDown className="w-10 h-10 opacity-50" />
+                    </motion.div>
+                </motion.section>
+
+                {/* Location Section */}
+                <motion.section
+                    initial={{ opacity: 0, y: 50 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-20%" }}
+                    className="grid md:grid-cols-2 gap-12 items-center min-h-[60vh]"
+                >
                     <div className="space-y-6">
-                        <div className="space-y-4">
-                            <label className="block text-sm font-medium text-slate-300">Select Locality</label>
+                        <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/20">
+                            <MapPin className="w-8 h-8" />
+                        </div>
+                        <h2 className="text-4xl font-bold">Location is <span className="text-emerald-400">Everything</span></h2>
+                        <p className="text-slate-400 leading-relaxed text-lg">
+                            Navi Mumbai is a city of nodes, each with its unique character and pricing dynamics. From the bustling commercial hub of Vashi to the rapidly appreciating sectors in Kharghar and the upcoming infrastructure in Panvel, the locality dictates the baseline value of your property.
+                        </p>
+                        <div className="p-4 bg-slate-900/50 border-l-4 border-emerald-500 rounded-r-xl">
+                            <p className="text-sm text-slate-300 italic">"The right node can mean a 20% premium on your property's fundamental value."</p>
+                        </div>
+                    </div>
+                    <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden group hover:border-emerald-500/50 transition-colors">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
+                        <div className="space-y-4 relative z-10">
+                            <label className="block text-sm font-medium text-slate-300 uppercase tracking-wider">Select Locality</label>
                             <select
                                 value={formData.location}
                                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-emerald-500 transition-all outline-none"
+                                className="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-lg text-white focus:ring-2 focus:ring-emerald-500 transition-all outline-none"
                             >
                                 {locations.map((loc) => (
                                     <option key={loc} value={loc}>{loc.charAt(0).toUpperCase() + loc.slice(1)}</option>
                                 ))}
                             </select>
                         </div>
-                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                            <p className="text-sm text-emerald-400">Navi Mumbai has seen a steady appreciation in most localities. Airoli and Kharghar are currently high-demand areas.</p>
-                        </div>
                     </div>
-                )
-            case 2:
-                return (
-                    <div className="space-y-8">
-                        <div className="space-y-4">
+                </motion.section>
+
+                {/* Space & Layout */}
+                <motion.section
+                    initial={{ opacity: 0, y: 50 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-20%" }}
+                    className="grid md:grid-cols-2 gap-12 items-center min-h-[60vh]"
+                >
+                    <div className="md:order-2 space-y-6">
+                        <div className="w-16 h-16 rounded-3xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-lg shadow-cyan-500/20">
+                            <Home className="w-8 h-8" />
+                        </div>
+                        <h2 className="text-4xl font-bold">Space & <span className="text-cyan-400">Configuration</span></h2>
+                        <p className="text-slate-400 leading-relaxed text-lg">
+                            Beyond carpet area, the layout efficiency heavily influences buyer appeal. A well-planned 2 BHK often commands a higher per-square-foot rate than a poorly laid out 3 BHK. Select the physical dimensions of the space.
+                        </p>
+                    </div>
+                    <div className="md:order-1 bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-8 relative overflow-hidden group hover:border-cyan-500/50 transition-colors">
+                        <div className="absolute inset-0 bg-gradient-to-bl from-cyan-500/5 to-transparent pointer-events-none" />
+                        <div className="space-y-4 relative z-10">
                             <label className="flex justify-between text-sm font-medium text-slate-300">
-                                <span>Total Area (Sq. Ft.)</span>
-                                <span className="text-emerald-400 font-bold">{formData.area_sqft} sqft</span>
+                                <span className="uppercase tracking-wider">Total Area</span>
+                                <span className="text-cyan-400 font-bold text-lg">{formData.area_sqft} sqft</span>
                             </label>
                             <input
                                 type="range" min="100" max="10000" step="10"
                                 value={formData.area_sqft}
                                 onChange={(e) => setFormData({ ...formData, area_sqft: Number(e.target.value) })}
-                                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                                className="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
                             />
-                            <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                                <span>100 SQFT</span>
-                                <span>5000 SQFT</span>
-                                <span>10000 SQFT</span>
-                            </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-slate-300">BHK</label>
-                                <div className="flex items-center space-x-4 bg-slate-800 rounded-lg p-2 border border-slate-700">
-                                    <button onClick={() => setFormData({ ...formData, bhk: Math.max(1, formData.bhk - 1) })} className="p-1 hover:text-emerald-400"><ChevronLeft /></button>
-                                    <span className="flex-1 text-center font-bold">{formData.bhk}</span>
-                                    <button onClick={() => setFormData({ ...formData, bhk: formData.bhk + 1 })} className="p-1 hover:text-emerald-400"><ChevronRight /></button>
+                        <div className="grid grid-cols-2 gap-6 relative z-10">
+                            <div className="space-y-3">
+                                <label className="block text-sm font-medium text-slate-300 uppercase tracking-wider">BHK</label>
+                                <div className="flex flex-col bg-slate-800 rounded-xl p-1 border border-slate-700">
+                                    {[1, 2, 3, 4, 5].map(num => (
+                                        <button
+                                            key={`bhk-${num}`}
+                                            onClick={() => setFormData({ ...formData, bhk: num })}
+                                            className={cn(
+                                                "py-2 px-4 rounded-lg text-sm font-medium transition-all",
+                                                formData.bhk === num ? "bg-cyan-500 text-[#0f172a] shadow-md shadow-cyan-500/20" : "text-slate-400 hover:bg-slate-700 hover:text-white"
+                                            )}
+                                        >
+                                            {num} BHK
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-slate-300">Bathrooms</label>
-                                <div className="flex items-center space-x-4 bg-slate-800 rounded-lg p-2 border border-slate-700">
-                                    <button onClick={() => setFormData({ ...formData, bathrooms: Math.max(1, formData.bathrooms - 1) })} className="p-1 hover:text-emerald-400"><ChevronLeft /></button>
-                                    <span className="flex-1 text-center font-bold">{formData.bathrooms}</span>
-                                    <button onClick={() => setFormData({ ...formData, bathrooms: formData.bathrooms + 1 })} className="p-1 hover:text-emerald-400"><ChevronRight /></button>
+                            <div className="space-y-3">
+                                <label className="block text-sm font-medium text-slate-300 uppercase tracking-wider">Baths</label>
+                                <div className="flex flex-col bg-slate-800 rounded-xl p-1 border border-slate-700">
+                                    {[1, 2, 3, 4].map(num => (
+                                        <button
+                                            key={`bath-${num}`}
+                                            onClick={() => setFormData({ ...formData, bathrooms: num })}
+                                            className={cn(
+                                                "py-2 px-4 rounded-lg text-sm font-medium transition-all",
+                                                formData.bathrooms === num ? "bg-cyan-500 text-[#0f172a] shadow-md shadow-cyan-500/20" : "text-slate-400 hover:bg-slate-700 hover:text-white"
+                                            )}
+                                        >
+                                            {num} Bath{num > 1 ? 's' : ''}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </div>
                     </div>
-                )
-            case 3:
-                return (
+                </motion.section>
+
+                {/* Building Profile */}
+                <motion.section
+                    initial={{ opacity: 0, y: 50 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-20%" }}
+                    className="grid md:grid-cols-2 gap-12 items-center min-h-[60vh]"
+                >
                     <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/20">
+                            <Building className="w-8 h-8" />
+                        </div>
+                        <h2 className="text-4xl font-bold">The Building <span className="text-emerald-400">Profile</span></h2>
+                        <p className="text-slate-400 leading-relaxed text-lg">
+                            Higher floors offer better views, less noise, and superior ventilation, typically commanding a premium. Newer constructions employ modern building codes and amenities, holding their value remarkably better over time. Let's detail the building's characteristics to refine the estimate.
+                        </p>
+                    </div>
+                    <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6 relative overflow-hidden group hover:border-emerald-500/50 transition-colors">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
+                        <div className="grid grid-cols-2 gap-6 relative z-10">
                             <div className="space-y-2">
-                                <label className="block text-sm font-medium text-slate-300">Floor Number</label>
+                                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Floor Number</label>
                                 <input
-                                    type="number"
+                                    type="number" min="0"
                                     value={formData.floor}
                                     onChange={(e) => setFormData({ ...formData, floor: Number(e.target.value) })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-white outline-none focus:ring-2 focus:ring-emerald-500"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="block text-sm font-medium text-slate-300">Total Floors</label>
+                                <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Total Floors</label>
                                 <input
-                                    type="number"
+                                    type="number" min="1"
                                     value={formData.total_floors}
-                                    onChange={(e) => setFormData({ ...formData, total_floors: Number(e.target.value) })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                                    onChange={(e) => setFormData({ ...formData, total_floors: Math.max(1, Number(e.target.value)) })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-white outline-none focus:ring-2 focus:ring-emerald-500"
                                 />
                             </div>
                         </div>
-                        <div className="space-y-4">
+                        <div className="space-y-4 pt-4 border-t border-slate-800 relative z-10">
                             <label className="flex justify-between text-sm font-medium text-slate-300">
-                                <span>Property Age (Years)</span>
-                                <span className="text-emerald-400 font-bold">{formData.age_of_property} Yrs</span>
+                                <span className="uppercase tracking-wider">Property Age</span>
+                                <span className="text-emerald-400 font-bold text-lg">{formData.age_of_property} Years</span>
                             </label>
                             <input
                                 type="range" min="0" max="50" step="1"
                                 value={formData.age_of_property}
                                 onChange={(e) => setFormData({ ...formData, age_of_property: Number(e.target.value) })}
-                                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                                className="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                             />
                         </div>
-                    </div>
-                )
-            case 4:
-                return (
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 pt-4 relative z-10">
                             <button
                                 onClick={() => setFormData({ ...formData, parking: formData.parking === 1 ? 0 : 1 })}
                                 className={cn(
-                                    "p-6 rounded-xl border transition-all flex flex-col items-center space-y-3",
-                                    formData.parking === 1 ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500"
+                                    "p-4 rounded-xl border transition-all flex flex-col items-center space-y-2 cursor-pointer",
+                                    formData.parking === 1 ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/10" : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500"
                                 )}
                             >
-                                <Home className="w-8 h-8" />
-                                <span className="font-semibold">Parking Included</span>
+                                <span className="font-semibold text-sm tracking-wide">Parking Included</span>
                             </button>
                             <button
                                 onClick={() => setFormData({ ...formData, lift: formData.lift === 1 ? 0 : 1 })}
                                 className={cn(
-                                    "p-6 rounded-xl border transition-all flex flex-col items-center space-y-3",
-                                    formData.lift === 1 ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500"
+                                    "p-4 rounded-xl border transition-all flex flex-col items-center space-y-2 cursor-pointer",
+                                    formData.lift === 1 ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/10" : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500"
                                 )}
                             >
-                                <Building className="w-8 h-8" />
-                                <span className="font-semibold">Lift Available</span>
+                                <span className="font-semibold text-sm tracking-wide">Lift Available</span>
                             </button>
                         </div>
-                        <div className="p-4 bg-slate-800/50 border border-dashed border-slate-700 rounded-lg text-xs text-slate-500 text-center italic">
-                            Ready to find out the market value of this property? Our AI model will analyze 2500+ recent transactions in Navi Mumbai to give you an accurate estimate.
-                        </div>
                     </div>
-                )
-            case 5:
-                return (
-                    <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="text-center space-y-8 py-4"
-                    >
-                        <div className="inline-block p-4 rounded-full bg-emerald-500/20 text-emerald-400 mb-2">
-                            <CheckCircle2 className="w-12 h-12" />
-                        </div>
-                        <div className="space-y-2">
-                            <h2 className="text-xl font-medium text-slate-300 uppercase tracking-widest">Market Valuation</h2>
-                            <div className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 py-2">
-                                {prediction ? formatPrice(prediction) : "Calculating..."}
-                            </div>
-                            <p className="text-slate-400 text-sm">Estimated fair market price for your property</p>
-                        </div>
+                </motion.section>
 
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-                            <FeatureCard icon={<MapPin className="w-4 h-4" />} label="Locality" value={formData.location} />
-                            <FeatureCard icon={<Home className="w-4 h-4" />} label="Area" value={`${formData.area_sqft} sqft`} />
-                            <FeatureCard icon={<Building className="w-4 h-4" />} label="BHK" value={formData.bhk} />
-                            <FeatureCard icon={<Calculator className="w-4 h-4" />} label="Age" value={`${formData.age_of_property} yrs`} />
+                {/* Valuation Engine */}
+                <motion.section
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true, margin: "-10%" }}
+                    className="py-24 relative"
+                >
+                    <div className="absolute inset-0 top-12 bottom-12 bg-gradient-to-b from-slate-900/0 via-emerald-900/20 to-slate-900/0 sm:mx-[-10vw] rounded-[100px] pointer-events-none blur-3xl z-[-1]" />
+
+                    <div className="max-w-2xl mx-auto text-center space-y-10 relative z-10">
+                        <div className="space-y-4">
+                            <h2 className="text-5xl font-black">Ready for <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Valuation</span></h2>
+                            <p className="text-slate-400 text-lg leading-relaxed">All parameters logged. Our pipeline is ready to process the data against Navi Mumbai market trends to find the fair price.</p>
                         </div>
 
                         <button
-                            onClick={() => setStep(1)}
-                            className="mt-8 text-emerald-400 hover:text-emerald-300 font-medium underline-offset-4 hover:underline transition-all"
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="w-full relative group overflow-hidden flex items-center justify-center space-x-4 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-emerald-500/50 p-8 rounded-3xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl hover:shadow-emerald-500/20"
                         >
-                            Start New Evaluation
+                            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            {loading ? (
+                                <div className="w-8 h-8 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    <span className="text-2xl text-white tracking-wide">Generate Neural Estimate</span>
+                                    <Calculator className="w-8 h-8 text-emerald-400 group-hover:rotate-12 transition-transform" />
+                                </>
+                            )}
                         </button>
-                    </motion.div>
-                )
-        }
-    }
 
-    return (
-        <div className="min-h-screen bg-[#0f172a] text-white flex items-center justify-center p-4">
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full" />
-            </div>
-
-            <div className="w-full max-w-2xl bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl shadow-2xl overflow-hidden">
-                {step < 5 && (
-                    <div className="px-8 pt-8 flex items-center justify-between border-b border-slate-800 pb-8">
-                        <div className="space-y-1">
-                            <h1 className="text-2xl font-bold tracking-tight">Navi Mumbai <span className="text-emerald-400">HouseVal</span></h1>
-                            <p className="text-slate-400 text-sm">Precise AI-powered real estate valuation</p>
-                        </div>
-                        <div className="hidden md:flex items-center space-x-2">
-                            {steps.map((s, i) => (
-                                <React.Fragment key={i}>
-                                    <div className={cn(
-                                        "flex flex-col items-center space-y-1",
-                                        step === i + 1 ? "text-emerald-400" : i + 1 < step ? "text-slate-300" : "text-slate-600"
-                                    )}>
-                                        <div className={cn(
-                                            "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all",
-                                            step === i + 1 ? "border-emerald-500 bg-emerald-500/10" : i + 1 < step ? "border-slate-500 bg-slate-800" : "border-slate-800 bg-slate-900"
-                                        )}>
-                                            {i + 1 < step ? <CheckCircle2 className="w-5 h-5" /> : s.icon}
+                        <div id="result-section" className="scroll-mt-32 min-h-[300px]">
+                            <AnimatePresence>
+                                {prediction && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        className="pt-16 space-y-8"
+                                    >
+                                        <div className="inline-flex items-center space-x-2 text-emerald-400 bg-emerald-500/10 px-5 py-2.5 rounded-full mb-4 border border-emerald-500/20 shadow-lg shadow-emerald-500/10">
+                                            <CheckCircle2 className="w-5 h-5" />
+                                            <span className="font-bold text-sm tracking-widest">COMPUTATION COMPLETE</span>
                                         </div>
-                                    </div>
-                                    {i < steps.length - 1 && <div className="w-4 h-[2px] bg-slate-800" />}
-                                </React.Fragment>
-                            ))}
+
+                                        <div className="space-y-4 bg-slate-900/90 backdrop-blur-xl p-12 rounded-[3rem] border border-slate-700 shadow-2xl shadow-emerald-500/10 relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-500 to-cyan-500" />
+                                            <h3 className="text-slate-400 uppercase tracking-widest text-sm font-semibold">Estimated Market Price</h3>
+                                            <div className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 py-4 drop-shadow-sm">
+                                                {formatPrice(prediction)}
+                                            </div>
+                                            <div className="inline-block px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-sm font-medium mt-4">
+                                                Valued at {(prediction / formData.area_sqft).toFixed(0)} ₹/sqft in {formData.location.toUpperCase()}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     </div>
-                )}
+                </motion.section>
 
-                <div className="p-8 md:p-12">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={step}
-                            initial={{ x: 20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: -20, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            {renderStep()}
-                        </motion.div>
-                    </AnimatePresence>
-
-                    {step < 5 && (
-                        <div className="mt-12 flex items-center justify-between">
-                            <button
-                                onClick={prevStep}
-                                disabled={step === 1}
-                                className={cn(
-                                    "flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all",
-                                    step === 1 ? "invisible" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                                )}
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                                <span>Previous</span>
-                            </button>
-
-                            {step < 4 ? (
-                                <button
-                                    onClick={nextStep}
-                                    className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-[#0f172a] px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20"
-                                >
-                                    <span>Continue</span>
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={handleSubmit}
-                                    disabled={loading}
-                                    className="flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:opacity-90 text-[#0f172a] px-10 py-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-                                >
-                                    {loading ? (
-                                        <div className="w-5 h-5 border-2 border-[#0f172a]/30 border-t-[#0f172a] rounded-full animate-spin" />
-                                    ) : (
-                                        <>
-                                            <span>Generate Valuation</span>
-                                            <Calculator className="w-4 h-4" />
-                                        </>
-                                    )}
-                                </button>
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                <div className="px-8 py-4 bg-slate-950/50 border-t border-slate-800 flex justify-between items-center text-[10px] text-slate-500 font-mono tracking-widest uppercase">
-                    <span>ML ENGINE V1.0.4</span>
-                    <span>&copy; 2026 HOUSE PRICE PREDICTOR</span>
-                </div>
+                {/* Footer */}
+                <footer className="py-12 text-center text-slate-500 text-sm tracking-wide">
+                    <p>Designed for analytical precision. Navi Mumbai Real Estate Engine v1.0.</p>
+                </footer>
             </div>
         </div>
     )
