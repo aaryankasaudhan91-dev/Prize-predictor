@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Space_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { SettingsProvider } from "@/context/SettingsContext";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -29,8 +30,10 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${spaceMono.variable} antialiased bg-page text-black font-mono`}
       >
-        {children}
-        <SpeedInsights />
+        <SettingsProvider>
+          {children}
+          <SpeedInsights />
+        </SettingsProvider>
       </body>
     </html>
   );

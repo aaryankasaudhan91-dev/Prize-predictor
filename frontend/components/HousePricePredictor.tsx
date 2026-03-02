@@ -5,10 +5,16 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Building, MapPin, Home, ChevronDown, Calculator, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 import axios from "axios"
+import NavigationOptions from "./NavigationOptions"
+import { useSettings } from "@/context/SettingsContext"
+import { translations } from "@/lib/translations"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
 export default function HousePricePredictor() {
+    const { language } = useSettings()
+    const t = translations[language]
+
     const [locations, setLocations] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
     const [prediction, setPrediction] = useState<number | null>(null)
@@ -76,14 +82,12 @@ export default function HousePricePredictor() {
                     </div>
                     <span className="text-[24px] font-display font-bold tracking-tight">HouseVal</span>
                 </div>
-                <nav className="hidden md:flex items-center gap-8">
-                    <span className="text-sm font-mono font-bold hover:text-red-primary cursor-pointer uppercase tracking-widest">Platform</span>
-                    <span className="text-sm font-mono font-bold text-gray-700 hover:text-black cursor-pointer uppercase tracking-widest">Market</span>
-                    <span className="text-sm font-mono font-bold text-gray-700 hover:text-black cursor-pointer uppercase tracking-widest">Methodology</span>
-                    <button onClick={() => document.getElementById('result-section')?.scrollIntoView({ behavior: 'smooth' })} className="px-6 h-12 border-2 border-black bg-black text-white text-sm font-display font-semibold hover:bg-gray-800 transition-colors uppercase rounded-none cursor-pointer">
-                        Get Valuation
+                <div className="flex items-center gap-8">
+                    <NavigationOptions />
+                    <button onClick={() => document.getElementById('result-section')?.scrollIntoView({ behavior: 'smooth' })} className="hidden md:block px-6 h-12 border-2 border-black bg-black text-white dark:bg-white dark:text-black dark:border-white text-sm font-display font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors uppercase rounded-none cursor-pointer">
+                        {t.getValuation}
                     </button>
-                </nav>
+                </div>
             </header>
 
             <div className="relative z-10 max-w-6xl mx-auto px-6 py-32 space-y-48">
@@ -96,13 +100,13 @@ export default function HousePricePredictor() {
                 >
                     <div className="space-y-6">
                         <div className="px-4 py-2 border-2 border-black bg-yellow-primary text-black text-sm font-mono font-bold tracking-[2px] uppercase w-fit">
-                            NAVI MUMBAI REAL ESTATE ENGINE
+                            {t.engineLabel}
                         </div>
                         <h1 className="text-6xl md:text-[5rem] font-display font-bold leading-[1.05] max-w-4xl tracking-tight text-black">
-                            The True <span className="text-red-primary">Market Value</span><br />of Your Property
+                            {t.heroTitle1} <span className="text-red-primary">{t.heroTitle2}</span> {t.heroTitle3 && <br />}{t.heroTitle3}
                         </h1>
-                        <p className="max-w-xl text-lg text-gray-700 font-mono leading-relaxed font-medium">
-                            Discover the fundamental data-driven worth of any property in Navi Mumbai. Our algorithmic model analyzes thousands of local market trends.
+                        <p className="max-w-xl text-lg text-gray-700 dark:text-gray-400 font-mono leading-relaxed font-medium">
+                            {t.heroSub}
                         </p>
                     </div>
                     <motion.div
@@ -125,14 +129,14 @@ export default function HousePricePredictor() {
                         <div className="w-12 h-12 rounded-full border-2 border-black bg-red-primary flex items-center justify-center text-white mb-8">
                             <MapPin className="w-6 h-6" />
                         </div>
-                        <h2 className="text-4xl md:text-5xl font-display font-bold tracking-tight">Location is Key</h2>
-                        <p className="text-gray-700 font-mono font-medium leading-relaxed max-w-md">
-                            Navi Mumbai comprises distinct nodes, each holding unique pricing dynamics. From the established hubs of Vashi to the growing sectors of Kharghar.
+                        <h2 className="text-4xl md:text-5xl font-display font-bold tracking-tight">{t.locationTitle}</h2>
+                        <p className="text-gray-700 dark:text-gray-400 font-mono font-medium leading-relaxed max-w-md">
+                            {t.locationDesc}
                         </p>
                     </div>
                     <div className="bg-card border-2 border-black p-8 relative">
                         <div className="space-y-4 relative z-10">
-                            <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">Select Locality</label>
+                            <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.selectLocality}</label>
                             <div className="relative border-2 border-black bg-page">
                                 <select
                                     value={formData.location}
@@ -160,16 +164,16 @@ export default function HousePricePredictor() {
                         <div className="w-12 h-12 border-2 border-black bg-blue-primary flex items-center justify-center text-white mb-8">
                             <Home className="w-6 h-6" />
                         </div>
-                        <h2 className="text-4xl md:text-5xl font-display font-bold tracking-tight">Space & Layout</h2>
-                        <p className="text-gray-700 font-mono font-medium leading-relaxed max-w-md">
-                            Configuration efficiency heavily influences buyer appeal and intrinsic value. Define the physical dimensions of your space.
+                        <h2 className="text-4xl md:text-5xl font-display font-bold tracking-tight">{t.spaceTitle}</h2>
+                        <p className="text-gray-700 dark:text-gray-400 font-mono font-medium leading-relaxed max-w-md">
+                            {t.spaceDesc}
                         </p>
                     </div>
                     <div className="md:order-1 bg-card border-2 border-black p-8 space-y-12 relative">
                         <div className="space-y-6">
                             <label className="flex justify-between text-sm font-mono font-bold tracking-[1px] text-black uppercase">
-                                <span>Total Area</span>
-                                <span className="text-blue-primary">{formData.area_sqft} SQ FT</span>
+                                <span>{t.totalArea}</span>
+                                <span className="text-blue-primary">{formData.area_sqft} {t.sqft}</span>
                             </label>
                             <input
                                 type="range" min="100" max="10000" step="10"
@@ -180,7 +184,7 @@ export default function HousePricePredictor() {
                         </div>
                         <div className="grid grid-cols-2 gap-8">
                             <div className="space-y-4">
-                                <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">Configuration</label>
+                                <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.configuration}</label>
                                 <div className="flex flex-col gap-3">
                                     {[1, 2, 3, 4].map(num => (
                                         <button
@@ -191,13 +195,13 @@ export default function HousePricePredictor() {
                                                 formData.bhk === num ? "bg-blue-primary border-black text-white" : "bg-white border-black text-black hover:bg-page"
                                             )}
                                         >
-                                            {num} BHK
+                                            {num} {t.bhk}
                                         </button>
                                     ))}
                                 </div>
                             </div>
                             <div className="space-y-4">
-                                <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">Bathrooms</label>
+                                <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.bathrooms}</label>
                                 <div className="flex flex-col gap-3">
                                     {[1, 2, 3, 4].map(num => (
                                         <button
@@ -208,7 +212,7 @@ export default function HousePricePredictor() {
                                                 formData.bathrooms === num ? "bg-blue-primary border-black text-white" : "bg-white border-black text-black hover:bg-page"
                                             )}
                                         >
-                                            {num} Bath
+                                            {num} {t.bath}
                                         </button>
                                     ))}
                                 </div>
@@ -226,15 +230,15 @@ export default function HousePricePredictor() {
                 >
                     <div className="space-y-6">
                         <div className="w-0 h-0 border-l-[24px] border-l-transparent border-r-[24px] border-r-transparent border-b-[41px] border-b-yellow-primary mb-8 flex items-center justify-center relative drop-shadow-[0_2px_0_rgba(0,0,0,1)]" style={{ filter: 'drop-shadow(0px 2px 0px black)' }} />
-                        <h2 className="text-4xl md:text-5xl font-display font-bold tracking-tight">Building Profile</h2>
-                        <p className="text-gray-700 font-mono font-medium leading-relaxed max-w-md">
-                            Higher floors offer better views and ventilation. Detail the property&apos;s age and infrastructure to finalize the data points.
+                        <h2 className="text-4xl md:text-5xl font-display font-bold tracking-tight">{t.buildingTitle}</h2>
+                        <p className="text-gray-700 dark:text-gray-400 font-mono font-medium leading-relaxed max-w-md">
+                            {t.buildingDesc}
                         </p>
                     </div>
                     <div className="bg-card border-2 border-black p-8 space-y-8 relative">
                         <div className="grid grid-cols-2 gap-6 relative z-10">
                             <div className="space-y-3">
-                                <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">Floor Number</label>
+                                <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.floorNumber}</label>
                                 <input
                                     type="number" min="0"
                                     value={formData.floor}
@@ -243,7 +247,7 @@ export default function HousePricePredictor() {
                                 />
                             </div>
                             <div className="space-y-3">
-                                <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">Total Floors</label>
+                                <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.totalFloors}</label>
                                 <input
                                     type="number" min="1"
                                     value={formData.total_floors}
@@ -254,7 +258,7 @@ export default function HousePricePredictor() {
                         </div>
 
                         <div className="space-y-4 pt-4 relative z-10">
-                            <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">Property Age (Yrs)</label>
+                            <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.propertyAge}</label>
                             <input
                                 type="number" min="0"
                                 value={formData.age_of_property}
@@ -274,7 +278,7 @@ export default function HousePricePredictor() {
                                 <div className="w-5 h-5 border-2 border-black flex items-center justify-center bg-white">
                                     {formData.parking === 1 && <div className="w-2.5 h-2.5 bg-black" />}
                                 </div>
-                                <span className="font-bold font-mono text-sm uppercase">Parking</span>
+                                <span className="font-bold font-mono text-sm uppercase">{t.parking}</span>
                             </button>
                             <button
                                 onClick={() => setFormData({ ...formData, lift: formData.lift === 1 ? 0 : 1 })}
@@ -286,7 +290,7 @@ export default function HousePricePredictor() {
                                 <div className="w-5 h-5 border-2 border-black flex items-center justify-center bg-white">
                                     {formData.lift === 1 && <div className="w-2.5 h-2.5 bg-black" />}
                                 </div>
-                                <span className="font-bold font-mono text-sm uppercase">Lift</span>
+                                <span className="font-bold font-mono text-sm uppercase">{t.lift}</span>
                             </button>
                         </div>
                     </div>
@@ -302,7 +306,7 @@ export default function HousePricePredictor() {
                 >
                     <div className="max-w-3xl mx-auto text-center space-y-12">
                         <div className="space-y-6">
-                            <h2 className="text-5xl md:text-7xl font-display font-bold trackig-tight">Ready for <span className="text-blue-primary">Valuation</span></h2>
+                            <h2 className="text-5xl md:text-7xl font-display font-bold trackig-tight">{t.readyFor} <span className="text-blue-primary">{t.valuation}</span></h2>
                         </div>
 
                         <button
@@ -314,7 +318,7 @@ export default function HousePricePredictor() {
                                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                             ) : (
                                 <>
-                                    <span>Generate Estimate</span>
+                                    <span>{t.generate}</span>
                                     <Calculator className="w-5 h-5" />
                                 </>
                             )}
@@ -332,16 +336,16 @@ export default function HousePricePredictor() {
                                     >
                                         <div className="flex items-center gap-3 px-4 py-2 bg-white border-2 border-black w-fit">
                                             <div className="w-3 h-3 rounded-full bg-success opacity-100 animate-pulse border-2 border-black" />
-                                            <span className="text-sm font-mono font-bold text-black tracking-[1px] uppercase">COMPUTATION COMPLETE</span>
+                                            <span className="text-sm font-mono font-bold text-black tracking-[1px] uppercase">{t.computationComplete}</span>
                                         </div>
 
                                         <div className="space-y-4">
-                                            <h3 className="text-gray-600 font-mono text-sm font-bold tracking-[1px] uppercase">Estimated Market Price</h3>
+                                            <h3 className="text-gray-600 font-mono text-sm font-bold tracking-[1px] uppercase">{t.estMarketPrice}</h3>
                                             <div className="text-6xl md:text-7xl font-display font-bold text-white tracking-tight">
                                                 {formatPrice(prediction)}
                                             </div>
                                             <div className="text-sm font-mono font-medium text-gray-600 pt-2 uppercase">
-                                                Valued at {formatValuePerSqft(prediction, formData.area_sqft)} ₹/sqft in {formData.location}
+                                                {t.valuedAt} {formatValuePerSqft(prediction, formData.area_sqft)} ₹/{t.sqft} {t.inLocation} {formData.location}
                                             </div>
                                         </div>
 
@@ -367,8 +371,8 @@ export default function HousePricePredictor() {
                 </motion.section>
 
                 <footer className="py-12 border-t-2 border-black text-center font-mono font-bold text-xs tracking-[2px] uppercase">
-                    Designed for analytical precision. Navi Mumbai Real Estate Engine v3.0.<br />
-                    <span className="text-red-primary">Bauhaus Digital Edition.</span>
+                    {t.footerLine1}<br />
+                    <span className="text-red-primary">{t.footerLine2}</span>
                 </footer>
             </div>
         </div>

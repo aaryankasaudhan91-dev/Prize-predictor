@@ -4,30 +4,69 @@
   --font-display: var(--font-display), sans-serif;
   --font-mono: var(--font-mono), monospace;
 
-  --color-page: #FAFAFA;
-  --color-sidebar: #000000;
-  --color-card: #FFFFFF;
+  --color-page: var(--semantic-page);
+  --color-sidebar: var(--semantic-sidebar);
+  --color-card: var(--semantic-card);
 
-  --color-red-primary: #E53935;
-  --color-blue-primary: #1E88E5;
-  --color-yellow-primary: #FFC107;
+  --color-red-primary: var(--semantic-red-primary);
+  --color-blue-primary: var(--semantic-blue-primary);
+  --color-yellow-primary: var(--semantic-yellow-primary);
 
-  --color-black: #000000;
-  --color-gray-700: #777777;
-  --color-gray-600: #999999;
-  --color-white: #FFFFFF;
+  --color-black: var(--semantic-black);
+  --color-gray-700: var(--semantic-gray-700);
+  --color-gray-600: var(--semantic-gray-600);
+  --color-white: var(--semantic-white);
 
-  --color-success: #4CAF50;
-  --color-warning: #FFC107;
-  --color-active: #E53935;
+  --color-success: var(--semantic-success);
+  --color-warning: var(--semantic-warning);
+  --color-active: var(--semantic-active);
 
-  --color-red-tint: #FFCDD2;
-  --color-blue-tint: #BBDEFB;
-  --color-yellow-text: #5D4037;
+  --color-red-tint: var(--semantic-red-tint);
+  --color-blue-tint: var(--semantic-blue-tint);
+  --color-yellow-text: var(--semantic-yellow-text);
+}
+
+:root {
+  --semantic-page: #FAFAFA;
+  --semantic-sidebar: #000000;
+  --semantic-card: #FFFFFF;
+
+  --semantic-red-primary: #E53935;
+  --semantic-blue-primary: #1E88E5;
+  --semantic-yellow-primary: #FFC107;
+
+  --semantic-black: #000000;
+  --semantic-gray-700: #777777;
+  --semantic-gray-600: #999999;
+  --semantic-white: #FFFFFF;
+
+  --semantic-success: #4CAF50;
+  --semantic-warning: #FFC107;
+  --semantic-active: #E53935;
+
+  --semantic-red-tint: #FFCDD2;
+  --semantic-blue-tint: #BBDEFB;
+  --semantic-yellow-text: #5D4037;
+}
+
+.dark {
+  --semantic-page: #0A0A0A;
+  --semantic-sidebar: #FFFFFF;
+  --semantic-card: #1A1A1A;
+
+  --semantic-black: #FFFFFF;
+  --semantic-gray-700: #A0A0A0;
+  --semantic-gray-600: #888888;
+  --semantic-white: #000000;
+
+  --semantic-red-tint: #4A0000;
+  --semantic-blue-tint: #00224A;
+  --semantic-yellow-text: #FFD54F;
 }
 
 body {
   background-color: var(--color-page);
   color: var(--color-black);
   font-family: var(--font-mono);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
