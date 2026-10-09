@@ -1,18 +1,40 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { X, Settings, User, Mail } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useSettings } from '@/context/SettingsContext'
 import { translations } from '@/lib/translations'
 
+import { statusTranslations } from "@/lib/statusTranslations"
+
 export default function NavigationOptions() {
     const [activeModal, setActiveModal] = useState<'settings' | 'contact' | 'about' | null>(null)
     const { language, setLanguage, theme, setTheme } = useSettings()
-    const t = translations[language]
+    const t: Record<string, string> = { ...translations[language], ...statusTranslations[language] }
+    const dialog = useRef<HTMLDivElement>(null)
 
     const closeModal = () => setActiveModal(null)
+
+    useEffect(() => {
+        if (!activeModal) return;
+        const previous = document.activeElement as HTMLElement | null;
+        const oldOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const frame = requestAnimationFrame(() => dialog.current?.focus());
+        const handleKey = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setActiveModal(null);
+            if (event.key !== "Tab") return;
+            const items = Array.from(dialog.current?.querySelectorAll<HTMLElement>('button, a[href], input, textarea, select, [tabindex="0"]') ?? []).filter(el => !el.hasAttribute("disabled"));
+            const first = items[0], last = items[items.length - 1];
+            if (!first) { event.preventDefault(); return; }
+            if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) { event.preventDefault(); last.focus(); }
+            else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialog.current)) { event.preventDefault(); first.focus(); }
+        };
+        document.addEventListener("keydown", handleKey);
+        return () => { cancelAnimationFrame(frame); document.removeEventListener("keydown", handleKey); document.body.style.overflow = oldOverflow; previous?.focus(); };
+    }, [activeModal]);
 
     return (
         <>
@@ -43,9 +65,9 @@ export default function NavigationOptions() {
 
             {/* Mobile Navigation Icons */}
             <nav className="md:hidden flex items-center gap-4 text-black">
-                <button onClick={() => setActiveModal('settings')} className="bg-transparent border-none p-1 pointer-cursor"><Settings className="w-5 h-5 hover:text-red-primary" /></button>
-                <button onClick={() => setActiveModal('contact')} className="bg-transparent border-none p-1 pointer-cursor"><Mail className="w-5 h-5 hover:text-blue-primary" /></button>
-                <button onClick={() => setActiveModal('about')} className="bg-transparent border-none p-1 pointer-cursor"><User className="w-5 h-5 hover:text-yellow-primary" /></button>
+                <button aria-label={t.settings} onClick={() => setActiveModal('settings')} className="bg-transparent border-none p-1 cursor-pointer"><Settings className="w-5 h-5 hover:text-red-primary" /></button>
+                <button aria-label={t.contact} onClick={() => setActiveModal('contact')} className="bg-transparent border-none p-1 cursor-pointer"><Mail className="w-5 h-5 hover:text-blue-primary" /></button>
+                <button aria-label={t.about} onClick={() => setActiveModal('about')} className="bg-transparent border-none p-1 cursor-pointer"><User className="w-5 h-5 hover:text-yellow-primary" /></button>
             </nav>
 
             {/* Modals */}
@@ -62,7 +84,7 @@ export default function NavigationOptions() {
                         />
 
                         {/* Modal Content */}
-                        <motion.div
+                        <motion.div ref={dialog} role="dialog" aria-modal="true" aria-labelledby="dialog-title" tabIndex={-1}
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -70,13 +92,13 @@ export default function NavigationOptions() {
                         >
                             {/* Modal Header */}
                             <div className="flex items-center justify-between p-6 border-b-4 border-black">
-                                <h2 className="text-2xl font-display font-bold uppercase tracking-tight flex items-center gap-3">
+                                <h2 id="dialog-title" className="text-2xl font-display font-bold uppercase tracking-tight flex items-center gap-3">
                                     {activeModal === 'settings' && <><Settings className="w-6 h-6 text-red-primary" /> {t.settings}</>}
                                     {activeModal === 'contact' && <><Mail className="w-6 h-6 text-blue-primary" /> {t.contact}</>}
                                     {activeModal === 'about' && <><User className="w-6 h-6 text-yellow-primary" /> {t.about}</>}
                                 </h2>
                                 <button
-                                    onClick={closeModal}
+                                    onClick={closeModal} aria-label={t.close}
                                     className="p-2 border-2 border-black hover:bg-red-primary hover:text-white transition-colors cursor-pointer"
                                 >
                                     <X className="w-5 h-5" />
@@ -93,7 +115,7 @@ export default function NavigationOptions() {
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                 {['english', 'hindi', 'marathi'].map((lang) => (
                                                     <button
-                                                        key={lang}
+                                                        key={t[lang]}
                                                         onClick={() => setLanguage(lang as 'english' | 'hindi' | 'marathi')}
                                                         className={cn(
                                                             "py-3 px-4 border-2 font-bold transition-all text-sm uppercase cursor-pointer w-full text-center tracking-widest",
@@ -102,7 +124,7 @@ export default function NavigationOptions() {
                                                                 : "bg-white border-black text-black hover:bg-gray-100/50"
                                                         )}
                                                     >
-                                                        {lang}
+                                                        {t[lang]}
                                                     </button>
                                                 ))}
                                             </div>
@@ -114,18 +136,18 @@ export default function NavigationOptions() {
                                         <div className="space-y-4">
                                             <label className="block text-sm font-bold tracking-[1px] text-black uppercase">{t.theme}</label>
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                                {['light', 'dark', 'system'].map((t) => (
+                                                {['light', 'dark', 'system'].map((themeOption) => (
                                                     <button
-                                                        key={t}
-                                                        onClick={() => setTheme(t as 'light' | 'dark' | 'system')}
+                                                        key={themeOption}
+                                                        onClick={() => setTheme(themeOption as 'light' | 'dark' | 'system')}
                                                         className={cn(
                                                             "py-3 px-4 border-2 font-bold transition-all text-sm uppercase cursor-pointer w-full text-center tracking-widest",
-                                                            theme === t
+                                                            theme === themeOption
                                                                 ? "bg-black border-black text-white"
                                                                 : "bg-white border-black text-black hover:bg-gray-100/50"
                                                         )}
                                                     >
-                                                        {t}
+                                                        {t[themeOption]}
                                                     </button>
                                                 ))}
                                             </div>
@@ -141,41 +163,7 @@ export default function NavigationOptions() {
                                             </p>
                                         </div>
 
-                                        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert('Message sent!'); closeModal(); }}>
-                                            <div className="space-y-2">
-                                                <label className="block text-xs font-bold tracking-[1px] uppercase">{t.nameLabel}</label>
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    className="w-full border-2 border-black p-3 bg-white outline-none focus:bg-blue-50 font-mono text-sm"
-                                                    placeholder={t.nameLabel}
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="block text-xs font-bold tracking-[1px] uppercase">{t.emailLabel}</label>
-                                                <input
-                                                    type="email"
-                                                    required
-                                                    className="w-full border-2 border-black p-3 bg-white outline-none focus:bg-blue-50 font-mono text-sm"
-                                                    placeholder="your.email@example.com"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="block text-xs font-bold tracking-[1px] uppercase">{t.messageLabel}</label>
-                                                <textarea
-                                                    required
-                                                    rows={4}
-                                                    className="w-full border-2 border-black p-3 bg-white outline-none focus:bg-blue-50 font-mono text-sm resize-none"
-                                                    placeholder={t.messageLabel}
-                                                />
-                                            </div>
-                                            <button
-                                                type="submit"
-                                                className="w-full mt-4 bg-blue-primary text-white border-2 border-black py-4 font-display font-bold text-lg hover:bg-blue-600 transition-colors uppercase tracking-[2px] cursor-pointer"
-                                            >
-                                                {t.sendMessage}
-                                            </button>
-                                        </form>
+                                        <p role="status">{t.contactDemo}</p>
                                     </div>
                                 )}
 

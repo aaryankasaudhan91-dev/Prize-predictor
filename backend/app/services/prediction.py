@@ -14,7 +14,7 @@ class PredictionService:
 
     def predict(self, data: PredictionRequest) -> float:
         # Convert Pydantic model to DataFrame for the pipeline
-        input_df = pd.DataFrame([data.dict()])
+        input_df = pd.DataFrame([data.model_dump()])
         
         # The pipeline handles scaling and one-hot encoding
         prediction = self.model.predict(input_df)

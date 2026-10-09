@@ -16,10 +16,10 @@ export const translations: TranslationDictionary = {
         about: "About",
         // Hero
         engineLabel: "NAVI MUMBAI REAL ESTATE ENGINE",
-        heroTitle1: "The True",
-        heroTitle2: "Market Value",
+        heroTitle1: "An Estimated",
+        heroTitle2: "Property Value",
         heroTitle3: "of Your Property",
-        heroSub: "Discover the fundamental data-driven worth of any property in Navi Mumbai. Our algorithmic model analyzes thousands of local market trends.",
+        heroSub: "Explore a model-based estimate for a Navi Mumbai home using its location and property details. Actual sale prices may differ.",
         // Location
         locationTitle: "Location is Key",
         locationDesc: "Navi Mumbai comprises distinct nodes, each holding unique pricing dynamics. From the established hubs of Vashi to the growing sectors of Kharghar.",
@@ -58,7 +58,7 @@ export const translations: TranslationDictionary = {
         emailLabel: "Email",
         messageLabel: "Message",
         sendMessage: "Send Message",
-        aboutDesc1: "Navi Mumbai HouseVal is a proprietary valuation engine built on top of a carefully curated dataset of over 10,000 recent property transactions.",
+        aboutDesc1: "Navi Mumbai HouseVal is a proprietary valuation engine built on top of a carefully curated dataset of 2,450 housing records used by this project.",
         aboutDesc2: "The Bauhaus-inspired interface reflects our core philosophy: form follows function. Every data point is presented with maximum clarity, stripping away real estate jargon to reveal the underlying market truth.",
         // Footer
         footerLine1: "Designed for analytical precision. Navi Mumbai Real Estate Engine v1.0.",
@@ -110,7 +110,7 @@ export const translations: TranslationDictionary = {
         emailLabel: "ईमेल",
         messageLabel: "संदेश",
         sendMessage: "संदेश भेजें",
-        aboutDesc1: "नवी मुंबई हाउसवैल एक मालिकाना मूल्यांकन इंजन है जो 10,000 से अधिक हालिया संपत्ति लेनदेन के सावधानीपूर्वक तैयार किए गए डेटासेट के शीर्ष पर बनाया गया है।",
+        aboutDesc1: "नवी मुंबई हाउसवैल एक मालिकाना मूल्यांकन इंजन है जो इस परियोजना में उपयोग किए गए 2,450 आवास रिकॉर्ड के सावधानीपूर्वक तैयार किए गए डेटासेट के शीर्ष पर बनाया गया है।",
         aboutDesc2: "बॉहॉस-प्रेरित इंटरफ़ेस हमारे मूल दर्शन को दर्शाता है: फॉर्म फ़ंक्शन का अनुसरण करता है। हर डेटा बिंदु अधिकतम स्पष्टता के साथ प्रस्तुत किया जाता है, अंतर्निहित बाजार सच्चाई को उजागर करने के लिए रियल एस्टेट शब्दजाल को हटा दिया जाता है।",
         footerLine1: "विश्लेषणात्मक परिशुद्धता के लिए डिज़ाइन किया गया। नवी मुंबई रियल एस्टेट इंजन v1.0.",
         footerLine2: "बॉहॉस डिजिटल संस्करण।"
@@ -161,7 +161,7 @@ export const translations: TranslationDictionary = {
         emailLabel: "ईमेल",
         messageLabel: "संदेश",
         sendMessage: "संदेश पाठवा",
-        aboutDesc1: "नवी मुंबई हाऊसव्हॅल हे १०,००० पेक्षा जास्त अलीकडील मालमत्ता व्यवहारांच्या काळजीपूर्वक तयार केलेल्या डेटासेटवर तयार केलेले एक मालकी हक्काचे मूल्यांकन इंजिन आहे.",
+        aboutDesc1: "नवी मुंबई हाऊसव्हॅल हे या प्रकल्पात वापरलेल्या २,४५० घरांच्या नोंदीांच्या काळजीपूर्वक तयार केलेल्या डेटासेटवर तयार केलेले एक मालकी हक्काचे मूल्यांकन इंजिन आहे.",
         aboutDesc2: "बॉहॉस-प्रेरित इंटरफेस आमच्या मूळ तत्त्वज्ञानाचे प्रतिबिंबित करते: फॉर्म फंक्शनचे अनुसरण करतो. प्रत्येक डेटा बिंदू जास्तीत जास्त स्पष्टतेसह सादर केला जातो, अंतर्निहित बाजार सत्य प्रकट करण्यासाठी रिअल इस्टेटमधील कठीण शब्द काढून टाकले जातात.",
         footerLine1: "विश्लेषणात्मक अचूकतेसाठी डिझाइन केलेले. नवी मुंबई रिअल इस्टेट इंजिन v1.0.",
         footerLine2: "बॉहॉस डिजिटल आवृत्ती."

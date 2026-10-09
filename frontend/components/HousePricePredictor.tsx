@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Building, MapPin, Home, ChevronDown, Calculator, TrendingUp } from "lucide-react"
+import { Building, MapPin, Home, ChevronDown, Calculator } from "lucide-react"
 import { cn } from "@/lib/utils"
 import axios from "axios"
 import NavigationOptions from "./NavigationOptions"
@@ -10,15 +10,21 @@ import ProUpgradeButton from "./ProUpgradeButton"
 import { useSettings } from "@/context/SettingsContext"
 import { translations } from "@/lib/translations"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+import { API_URL, waitForLocations } from "@/lib/backend"
+import { statusTranslations } from "@/lib/statusTranslations"
 
 export default function HousePricePredictor() {
     const { language } = useSettings()
-    const t = translations[language]
+    const t: Record<string, string> = { ...translations[language], ...statusTranslations[language] }
 
     const [locations, setLocations] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
     const [prediction, setPrediction] = useState<number | null>(null)
+    const [backendState, setBackendState] = useState<"waking" | "ready" | "offline">("waking")
+    const [retryCount, setRetryCount] = useState(0)
+    const [error, setError] = useState<"invalid" | "failed" | null>(null)
+    const revision = useRef(0)
+    const requestController = useRef<AbortController | null>(null)
 
     const [formData, setFormData] = useState({
         location: "",
@@ -32,33 +38,58 @@ export default function HousePricePredictor() {
         lift: 1
     })
 
+    const updateForm = (next: typeof formData) => {
+        revision.current += 1;
+        setFormData(next);
+        setPrediction(null);
+        setError(null);
+    };
+    const valid = locations.includes(formData.location) &&
+        Object.entries(formData).every(([key, value]) => key === "location" || (typeof value === "number" && Number.isFinite(value))) &&
+        formData.area_sqft > 0 && formData.bhk > 0 && formData.bathrooms > 0 &&
+        Number.isInteger(formData.floor) && Number.isInteger(formData.total_floors) &&
+        formData.floor >= 0 && formData.total_floors > 0 && formData.floor <= formData.total_floors && formData.age_of_property >= 0;
+
     useEffect(() => {
-        const fetchLocations = async () => {
-            try {
-                const response = await axios.get(`${API_URL}/locations`)
-                setLocations(response.data.locations)
-                if (response.data.locations.length > 0) {
-                    setFormData(prev => ({ ...prev, location: response.data.locations[0] }))
-                }
-            } catch (error) {
-                console.error("Error fetching locations:", error)
-            }
-        }
-        fetchLocations()
-    }, [])
+        const controller = new AbortController();
+        waitForLocations(controller.signal).then(list => {
+            if (controller.signal.aborted) return;
+            setLocations(list);
+            setFormData(prev => ({ ...prev, location: list.includes(prev.location) ? prev.location : list[0] }));
+            setBackendState("ready");
+        }).catch(() => { if (!controller.signal.aborted) setBackendState("offline"); });
+        return () => controller.abort();
+    }, [retryCount]);
+    useEffect(() => () => requestController.current?.abort(), []);
 
     const handleSubmit = async () => {
-        setLoading(true)
+        if (!valid) { setError("invalid"); return; }
+        const submittedRevision = revision.current;
+        const submitted = { ...formData };
+        const controller = new AbortController();
+        requestController.current?.abort();
+        requestController.current = controller;
+        setLoading(true);
+        setPrediction(null);
+        setError(null);
+        setBackendState("waking");
         try {
-            const response = await axios.post(`${API_URL}/predict`, formData)
-            setPrediction(response.data.predicted_price)
-        } catch (error) {
-            console.error("Error predicting price:", error)
-            alert("Failed to get prediction. Ensure the backend is running.")
+            await waitForLocations(controller.signal);
+            if (controller.signal.aborted) return;
+            setBackendState("ready");
+            const response = await axios.post(`${API_URL}/predict`, submitted, { signal: controller.signal, timeout: 30000 });
+            const price = response.data.predicted_price;
+            if (typeof price !== "number" || !Number.isFinite(price) || price <= 0) throw new Error("invalid result");
+            if (submittedRevision === revision.current) setPrediction(price);
+        } catch {
+            if (!controller.signal.aborted) {
+                setError("failed");
+                setBackendState("offline");
+            }
         } finally {
-            setLoading(false)
+            if (!controller.signal.aborted) setLoading(false);
         }
-    }
+    };
 
     const formatPrice = (price: number) => {
         if (price >= 10000000) {
@@ -76,14 +107,14 @@ export default function HousePricePredictor() {
     return (
         <div className="min-h-screen bg-page text-black font-mono selection:bg-red-primary/30">
             {/* Header */}
-            <header className="fixed top-0 w-full h-20 px-8 md:px-14 border-b-2 border-black bg-card flex items-center justify-between z-50">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-red-primary border-2 border-black flex items-center justify-center">
+            <header className="fixed top-0 w-full h-20 px-4 sm:px-8 md:px-14 border-b-2 border-black bg-card flex items-center justify-between z-50">
+                <div className="flex items-center gap-2 sm:gap-4">
+                    <div className="w-8 h-8 sm:w-12 sm:h-12 shrink-0 rounded-full bg-red-primary border-2 border-black flex items-center justify-center">
                         <Building className="w-6 h-6 text-white" />
                     </div>
-                    <span className="text-[24px] font-display font-bold tracking-tight">HouseVal</span>
+                    <span className="text-xl sm:text-[24px] font-display font-bold tracking-tight">HouseVal</span>
                 </div>
-                <div className="flex items-center gap-8">
+                <div className="flex items-center gap-2 sm:gap-8">
                     <ProUpgradeButton />
                     <NavigationOptions />
                     <button onClick={() => document.getElementById('result-section')?.scrollIntoView({ behavior: 'smooth' })} className="hidden md:block px-6 h-12 border-2 border-black bg-black text-white dark:bg-white dark:text-black dark:border-white text-sm font-display font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors uppercase rounded-none cursor-pointer">
@@ -93,6 +124,10 @@ export default function HousePricePredictor() {
             </header>
 
             <div className="relative z-10 max-w-6xl mx-auto px-6 py-32 space-y-48">
+                <div role="status" aria-live="polite" className="border-2 border-black bg-card p-4">
+                    {backendState === "waking" ? t.waking : backendState === "ready" ? t.ready : t.offline}
+                    {backendState === "offline" && <button className="ml-4 underline" onClick={() => { setError(null); setBackendState("waking"); setRetryCount(n => n + 1); }}>{t.retry}</button>}
+                </div>
                 {/* Hero Section */}
                 <motion.section
                     initial={{ opacity: 0, y: 50 }}
@@ -138,11 +173,12 @@ export default function HousePricePredictor() {
                     </div>
                     <div className="bg-card border-2 border-black p-8 relative">
                         <div className="space-y-4 relative z-10">
-                            <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.selectLocality}</label>
+                            <label htmlFor="location" className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.selectLocality}</label>
                             <div className="relative border-2 border-black bg-page">
                                 <select
+                                    id="location" disabled={backendState !== "ready"}
                                     value={formData.location}
-                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                    onChange={(e) => updateForm({ ...formData, location: e.target.value })}
                                     className="w-full appearance-none px-6 py-5 bg-transparent text-lg font-mono font-semibold text-black outline-none cursor-pointer rounded-none"
                                 >
                                     {locations.map((loc) => (
@@ -178,9 +214,9 @@ export default function HousePricePredictor() {
                                 <span className="text-blue-primary">{formData.area_sqft} {t.sqft}</span>
                             </label>
                             <input
-                                type="range" min="100" max="10000" step="10"
+                                id="area" aria-label={t.totalArea} type="range" min="100" max="10000" step="10"
                                 value={formData.area_sqft}
-                                onChange={(e) => setFormData({ ...formData, area_sqft: Number(e.target.value) })}
+                                onChange={(e) => updateForm({ ...formData, area_sqft: Number(e.target.value) })}
                                 className="w-full h-3 bg-page border-2 border-black appearance-none cursor-pointer rounded-none outline-none accent-blue-primary"
                             />
                         </div>
@@ -190,8 +226,8 @@ export default function HousePricePredictor() {
                                 <div className="flex flex-col gap-3">
                                     {[1, 2, 3, 4].map(num => (
                                         <button
-                                            key={`bhk-${num}`}
-                                            onClick={() => setFormData({ ...formData, bhk: num })}
+                                            key={`bhk-${num}`} aria-pressed={formData.bhk === num}
+                                            onClick={() => updateForm({ ...formData, bhk: num })}
                                             className={cn(
                                                 "py-3 px-5 text-sm font-mono font-bold transition-all border-2 rounded-none text-left uppercase cursor-pointer",
                                                 formData.bhk === num ? "bg-blue-primary border-black text-white" : "bg-white border-black text-black hover:bg-page"
@@ -207,8 +243,8 @@ export default function HousePricePredictor() {
                                 <div className="flex flex-col gap-3">
                                     {[1, 2, 3, 4].map(num => (
                                         <button
-                                            key={`bath-${num}`}
-                                            onClick={() => setFormData({ ...formData, bathrooms: num })}
+                                            key={`bath-${num}`} aria-pressed={formData.bathrooms === num}
+                                            onClick={() => updateForm({ ...formData, bathrooms: num })}
                                             className={cn(
                                                 "py-3 px-5 text-sm font-mono font-bold transition-all border-2 rounded-none text-left uppercase cursor-pointer",
                                                 formData.bathrooms === num ? "bg-blue-primary border-black text-white" : "bg-white border-black text-black hover:bg-page"
@@ -240,38 +276,39 @@ export default function HousePricePredictor() {
                     <div className="bg-card border-2 border-black p-8 space-y-8 relative">
                         <div className="grid grid-cols-2 gap-6 relative z-10">
                             <div className="space-y-3">
-                                <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.floorNumber}</label>
+                                <label htmlFor="floor" className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.floorNumber}</label>
                                 <input
                                     type="number" min="0"
-                                    value={formData.floor}
-                                    onChange={(e) => setFormData({ ...formData, floor: Number(e.target.value) })}
+                                    id="floor" value={formData.floor}
+                                    onChange={(e) => updateForm({ ...formData, floor: Number(e.target.value) })}
                                     className="w-full bg-page border-2 border-black px-5 py-4 font-mono font-bold outline-none rounded-none focus:bg-yellow-primary/10"
                                 />
                             </div>
                             <div className="space-y-3">
-                                <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.totalFloors}</label>
+                                <label htmlFor="total_floors" className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.totalFloors}</label>
                                 <input
                                     type="number" min="1"
-                                    value={formData.total_floors}
-                                    onChange={(e) => setFormData({ ...formData, total_floors: Math.max(1, Number(e.target.value)) })}
+                                    id="total_floors" value={formData.total_floors}
+                                    onChange={(e) => updateForm({ ...formData, total_floors: Math.max(1, Number(e.target.value)) })}
                                     className="w-full bg-page border-2 border-black px-5 py-4 font-mono font-bold outline-none rounded-none focus:bg-yellow-primary/10"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-4 pt-4 relative z-10">
-                            <label className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.propertyAge}</label>
+                            <label htmlFor="age_of_property" className="block text-sm font-mono font-bold tracking-[1px] text-black uppercase">{t.propertyAge}</label>
                             <input
                                 type="number" min="0"
-                                value={formData.age_of_property}
-                                onChange={(e) => setFormData({ ...formData, age_of_property: Number(e.target.value) })}
+                                id="age_of_property" value={formData.age_of_property}
+                                onChange={(e) => updateForm({ ...formData, age_of_property: Number(e.target.value) })}
                                 className="w-full bg-page border-2 border-black px-5 py-4 font-mono font-bold outline-none rounded-none focus:bg-yellow-primary/10"
                             />
                         </div>
 
                         <div className="grid grid-cols-2 gap-6 pt-4 relative z-10">
                             <button
-                                onClick={() => setFormData({ ...formData, parking: formData.parking === 1 ? 0 : 1 })}
+                                aria-pressed={formData.parking === 1}
+                                onClick={() => updateForm({ ...formData, parking: formData.parking === 1 ? 0 : 1 })}
                                 className={cn(
                                     "p-5 border-2 transition-all flex items-center justify-center gap-3 cursor-pointer rounded-none",
                                     formData.parking === 1 ? "bg-yellow-primary border-black text-black" : "bg-white border-black text-black hover:bg-page"
@@ -283,7 +320,8 @@ export default function HousePricePredictor() {
                                 <span className="font-bold font-mono text-sm uppercase">{t.parking}</span>
                             </button>
                             <button
-                                onClick={() => setFormData({ ...formData, lift: formData.lift === 1 ? 0 : 1 })}
+                                aria-pressed={formData.lift === 1}
+                                onClick={() => updateForm({ ...formData, lift: formData.lift === 1 ? 0 : 1 })}
                                 className={cn(
                                     "p-5 border-2 transition-all flex items-center justify-center gap-3 cursor-pointer rounded-none",
                                     formData.lift === 1 ? "bg-yellow-primary border-black text-black" : "bg-white border-black text-black hover:bg-page"
@@ -308,16 +346,19 @@ export default function HousePricePredictor() {
                 >
                     <div className="max-w-3xl mx-auto text-center space-y-12">
                         <div className="space-y-6">
-                            <h2 className="text-5xl md:text-7xl font-display font-bold trackig-tight">{t.readyFor} <span className="text-blue-primary">{t.valuation}</span></h2>
+                            <h2 className="text-5xl md:text-7xl font-display font-bold tracking-tight">{t.readyFor} <span className="text-blue-primary">{t.valuation}</span></h2>
                         </div>
 
+                        {!valid && backendState === "ready" && <p role="alert">{t.invalid}</p>}
+                        {error && <p role="alert">{t[error]}</p>}
+                        {backendState !== "ready" && <p role="status">{backendState === "waking" ? t.waking : t.offline}</p>}
                         <button
                             onClick={handleSubmit}
-                            disabled={loading}
+                            disabled={loading || backendState !== "ready" || !valid}
                             className="w-full md:w-auto mx-auto flex items-center justify-center gap-4 border-2 border-black bg-black hover:bg-gray-800 text-white px-12 py-6 font-display font-bold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-none uppercase cursor-pointer"
                         >
                             {loading ? (
-                                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                <><span role="status" className="sr-only">{t.loading}</span><div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /></>
                             ) : (
                                 <>
                                     <span>{t.generate}</span>
@@ -328,7 +369,7 @@ export default function HousePricePredictor() {
 
                         <div className="min-h-[300px] mt-12 w-full max-w-xl mx-auto text-left">
                             <AnimatePresence mode="wait">
-                                {prediction && (
+                                {prediction !== null && (
                                     <motion.div
                                         key="result"
                                         initial={{ opacity: 0, y: 20 }}
@@ -351,20 +392,7 @@ export default function HousePricePredictor() {
                                             </div>
                                         </div>
 
-                                        <div className="h-0.5 w-full bg-gray-700" />
-
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm font-mono font-bold text-gray-600 uppercase tracking-widest">Area Average</span>
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-base font-mono font-bold text-white">
-                                                    {formatPrice(prediction * 0.92)}
-                                                </span>
-                                                <div className="flex items-center gap-1 px-2 py-1 bg-white border-2 border-black">
-                                                    <TrendingUp className="w-4 h-4 text-black" />
-                                                    <span className="text-xs font-mono font-bold text-black">+8.5%</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <p className="text-sm text-gray-600">{t.estimateNote}</p>
                                     </motion.div>
                                 )}
                             </AnimatePresence>

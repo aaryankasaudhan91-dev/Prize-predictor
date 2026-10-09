@@ -79,3 +79,7 @@ The application will be available at `http://localhost:3000` and the API at `htt
 ## Deployment
 - **Backend**: Can be deployed on Render using the provided `render.yaml` or `Dockerfile`.
 - **Frontend**: Optimized for Vercel. Set `NEXT_PUBLIC_API_URL` environment variable to point to your backend.
+## Backend wake-up and truthful UI
+The frontend requests `/locations` on arrival and before prediction, retrying for up to two minutes with 12-second request timeouts. This wakes Render's sleeping free service and confirms the model is ready. It stops after success, cancellation, or timeout; there is no periodic keep-alive. `/health` is available for Render health checks. Set `NEXT_PUBLIC_API_URL` to the HTTPS backend URL in Vercel and rebuild the frontend.
+
+Estimates are invalidated when details change. Contact submission is explicitly unavailable and Pro features are marked coming soon until real services are implemented. The dataset has 2,450 records; its provenance and recency are not independently verified.

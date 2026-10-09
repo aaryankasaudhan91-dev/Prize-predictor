@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
+import { MotionConfig } from "framer-motion"
+
 type Theme = 'light' | 'dark' | 'system'
 type Language = 'english' | 'hindi' | 'marathi'
 
@@ -22,28 +24,31 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
     // Wait for mount to avoid hydration mismatch
     useEffect(() => {
-        const savedTheme = localStorage.getItem('houseval-theme') as Theme
-        const savedLang = localStorage.getItem('houseval-lang') as Language
+        let savedTheme: Theme = 'light'
+        let savedLang: Language = 'english'
+        try { savedTheme = localStorage.getItem('houseval-theme') as Theme; savedLang = localStorage.getItem('houseval-lang') as Language; } catch { /* Storage may be disabled. */ }
 
         // Enqueue the state update using setTimeout so we don't
         // mutate state synchronously inside the effect, which causes a
         // React hydration mismatch / cascaded render warning
         setTimeout(() => {
-            if (savedTheme) setThemeState(savedTheme)
-            if (savedLang) setLanguageState(savedLang)
+            if (["light", "dark", "system"].includes(savedTheme)) setThemeState(savedTheme)
+            if (["english", "hindi", "marathi"].includes(savedLang)) setLanguageState(savedLang)
             setMounted(true)
         }, 0)
     }, [])
 
     const setTheme = (newTheme: Theme) => {
         setThemeState(newTheme)
-        localStorage.setItem('houseval-theme', newTheme)
+        try { localStorage.setItem('houseval-theme', newTheme) } catch { /* Keep session preference. */ }
     }
 
     const setLanguage = (newLang: Language) => {
         setLanguageState(newLang)
-        localStorage.setItem('houseval-lang', newLang)
+        try { localStorage.setItem('houseval-lang', newLang) } catch { /* Keep session preference. */ }
     }
+
+    useEffect(() => { document.documentElement.lang = { english: "en", hindi: "hi", marathi: "mr" }[language]; }, [language])
 
     // Effect to apply the dark mode class to the document element
     useEffect(() => {
@@ -79,7 +84,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
     return (
         <SettingsContext.Provider value={{ theme, setTheme, language, setLanguage }}>
-            {children}
+            <MotionConfig reducedMotion="user">{children}</MotionConfig>
         </SettingsContext.Provider>
     )
 }
