@@ -35,27 +35,41 @@ A full-stack machine learning application to predict house prices in Navi Mumbai
 - Node.js 18+
 - npm
 
-### 2. Backend Setup
+### 2. Installation
+
+**Backend Setup:**
 ```bash
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 
 # Run model training (optional if artifacts exist)
 python ml/train.py
-
-# Start FastAPI server
-# Important: Run this command from the project root directory
-python -m uvicorn main:app --reload
 ```
-The API will be available at `http://localhost:8000`.
 
-### 3. Frontend Setup
+**Frontend Setup:**
 ```bash
 cd frontend
 npm install
-npm run dev
+cd ..
 ```
-The application will be available at `http://localhost:3000`.
+
+### 3. Running the Application
+
+You can start both the frontend and backend servers simultaneously from the project root directory using the unified start command:
+```bash
+npm start
+```
+
+Alternatively, you can start them individually from the root directory:
+```bash
+# Start backend server only
+npm run start:backend
+
+# Start frontend server only
+npm run start:frontend
+```
+
+The application will be available at `http://localhost:3000` and the API at `http://localhost:8000`.
 
 ## Model Performance
 - **Algorithm**: XGBoost Regressor

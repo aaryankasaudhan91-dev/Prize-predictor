@@ -6,6 +6,7 @@ import { Building, MapPin, Home, ChevronDown, Calculator, TrendingUp } from "luc
 import { cn } from "@/lib/utils"
 import axios from "axios"
 import NavigationOptions from "./NavigationOptions"
+import ProUpgradeButton from "./ProUpgradeButton"
 import { useSettings } from "@/context/SettingsContext"
 import { translations } from "@/lib/translations"
 
@@ -83,6 +84,7 @@ export default function HousePricePredictor() {
                     <span className="text-[24px] font-display font-bold tracking-tight">HouseVal</span>
                 </div>
                 <div className="flex items-center gap-8">
+                    <ProUpgradeButton />
                     <NavigationOptions />
                     <button onClick={() => document.getElementById('result-section')?.scrollIntoView({ behavior: 'smooth' })} className="hidden md:block px-6 h-12 border-2 border-black bg-black text-white dark:bg-white dark:text-black dark:border-white text-sm font-display font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors uppercase rounded-none cursor-pointer">
                         {t.getValuation}
